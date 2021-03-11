@@ -1,0 +1,762 @@
+openapi: 3.0.3
+info:
+  contact:
+    email: nnworkspace@gmail.com
+  description: |
+    This is a server for Art Library of Alpha Org.
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  termsOfService: http://TODO
+  title: Art Library of Alpha Org
+  version: 0.1.0
+externalDocs:
+  description: Find out more about Swagger
+  url: http://swagger.io
+servers:
+- description: SwaggerHub API Auto Mocking
+  url: https://localhost:3000
+- url: https://artlibrary.alpha.org/api
+tags:
+- description: Everything about a piece of artwork at Alpha Org
+  externalDocs:
+    description: Find out more
+    url: https://github.com/nnworkspace/art-library-api
+  name: artwork
+- description: a list of artworks
+  name: artworks
+- description: A record of lending of an artwork to an employee in the Alpha Org.
+  externalDocs:
+    description: Find out more
+    url: https://github.com/nnworkspace/art-library-api
+  name: lending
+- description: a list of records of lendings to an employee in the Alpha Org.
+  name: lendings
+paths:
+  /artworks:
+    get:
+      description: Returns a list of artworks. The result can be filtered by query
+        parameters.
+      operationId: getArtworks
+      parameters:
+      - description: name of the artwork, can be a partial string of name
+        explode: true
+        in: query
+        name: title
+        required: false
+        schema:
+          example: Mona Lisa
+          type: string
+        style: form
+      - description: description of the artwork, can be a partial string of description
+        explode: true
+        in: query
+        name: description
+        required: false
+        schema:
+          example: Portrait painting with a mysterious smile
+          type: string
+        style: form
+      - description: (Partial) name of the artists, relationship between the artists
+          in the parameter list is 'or'.
+        explode: false
+        in: query
+        name: artists
+        required: false
+        schema:
+          example:
+          - da Vinci
+          - Monet
+          - Lowry
+          - Cartier-Bresson
+          items:
+            type: string
+          minItems: 1
+          type: array
+        style: form
+      - explode: true
+        in: query
+        name: artForm
+        required: false
+        schema:
+          $ref: '#/components/schemas/ArtForm'
+        style: form
+      - explode: true
+        in: query
+        name: artworkStatus
+        required: false
+        schema:
+          $ref: '#/components/schemas/ArtworkStatus'
+        style: form
+      - explode: true
+        in: query
+        name: availableFrom
+        required: false
+        schema:
+          description: The earliest date, when an artwork item will be available.
+          example: 2021-03-09
+          format: date
+          type: string
+        style: form
+      - description: Specifies in response, how many records should be contained in
+          a page.
+        explode: true
+        in: query
+        name: limit
+        required: true
+        schema:
+          example: 25
+          format: int32
+          type: integer
+        style: form
+      - description: Specifies how many records should be skipped.
+        explode: true
+        in: query
+        name: offset
+        required: true
+        schema:
+          example: 100
+          type: integer
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArtworksResponse'
+          description: successful operation
+        "400":
+          description: Invalid query parameters supplied
+        "404":
+          description: No artworks found
+      security:
+      - api_key: []
+      summary: Get a list of artworks.
+      tags:
+      - artworks
+      x-eov-operation-handler: controllers/ArtworksController
+    post:
+      operationId: addArtwork
+      requestBody:
+        $ref: '#/components/requestBodies/NewArtwork'
+      responses:
+        "405":
+          description: Invalid input
+      security:
+      - artworks_auth:
+        - write:artworks
+        - read:artworks
+      summary: create an artwork in the artwork list
+      tags:
+      - artwork
+      x-eov-operation-handler: controllers/ArtworkController
+  /artworks/{artworkId}:
+    delete:
+      operationId: deleteArtwork
+      parameters:
+      - explode: false
+        in: header
+        name: api_key
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: Id of the artwork to delete
+        explode: false
+        in: path
+        name: artworkId
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "400":
+          description: Invalid ID supplied
+        "404":
+          description: Artwork not found
+      security:
+      - artworks_auth:
+        - write:artworks
+        - read:artworks
+      summary: Deletes a piece of artwork
+      tags:
+      - artwork
+      x-eov-operation-handler: controllers/ArtworkController
+    get:
+      description: Returns a single artwork with its properties such as name, description,
+        artists, storage location, etc.
+      operationId: getArtworkById
+      parameters:
+      - description: ID of a artwork. ID of an artwork is a combination of the artist
+          name and the artwork name and optional integer identifier
+        example: da-vinci-mona-lisa
+        explode: false
+        in: path
+        name: artworkId
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Artwork'
+          description: successful operation
+        "400":
+          description: Invalid ID supplied
+        "404":
+          description: Artwork not found
+      security:
+      - api_key: []
+      summary: Find artwork by ID.
+      tags:
+      - artwork
+      x-eov-operation-handler: controllers/ArtworkController
+    patch:
+      operationId: updateArtwork
+      parameters:
+      - explode: false
+        in: header
+        name: api_key
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: Artwork id to update
+        explode: false
+        in: path
+        name: artworkId
+        required: true
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        $ref: '#/components/requestBodies/Artwork'
+      responses:
+        "400":
+          description: Invalid artworkId supplied
+        "404":
+          description: Artwork not found
+        "405":
+          description: Validation exception
+      security:
+      - artworks_auth:
+        - write:artworks
+        - read:artworks
+      summary: Update an exisiting artwork
+      tags:
+      - artwork
+      x-eov-operation-handler: controllers/ArtworkController
+    put:
+      operationId: replaceColorAtSelfURL
+      parameters:
+      - explode: false
+        in: header
+        name: api_key
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: Artwork id to replace
+        explode: false
+        in: path
+        name: artworkId
+        required: true
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        $ref: '#/components/requestBodies/Artwork'
+      responses:
+        "400":
+          description: Invalid artworkId supplied
+        "404":
+          description: Artwork not found
+        "405":
+          description: Validation exception
+      security:
+      - artworks_auth:
+        - write:artworks
+        - read:artworks
+      summary: Replace a artwork
+      tags:
+      - artwork
+      x-eov-operation-handler: controllers/ArtworkController
+  /artworks/{artworkId}/images:
+    post:
+      operationId: uploadImage
+      parameters:
+      - description: ID of the artwork
+        explode: false
+        in: path
+        name: artworkId
+        required: true
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/octet-stream:
+            schema:
+              format: binary
+              type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+          description: successful operation
+      security:
+      - artworks_auth:
+        - write:artworks
+        - read:artworks
+      summary: uploads an image
+      tags:
+      - artwork
+      x-eov-operation-handler: controllers/ArtworkController
+components:
+  requestBodies:
+    NewArtwork:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/NewArtwork'
+      description: A new Artwork object to be created on the server
+      required: true
+    Artwork:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Artwork'
+      description: Artwork object to be updated on the server
+      required: true
+  schemas:
+    ArtForm:
+      enum:
+      - painting
+      - photograph
+      - print
+      - sculpture
+      - assemblage
+      - collage
+      type: string
+    ArtworkStatus:
+      enum:
+      - available
+      - reserved
+      - in use
+      - return reported
+      - record deleted
+      type: string
+    NewArtwork:
+      example:
+        lastUpdatedBy: ab1235cde
+        artist: Leonardo da Vinci
+        description: Portrait painting with a mysterious smile
+        storageLocation: building 12 room 304 shelf 5 slot 67
+        marketValue: 288.88
+        title: Mona Lisa
+        createdOn: 2021-02-28T08:36:58Z
+        artForm: painting
+        productSerialNumber: TSN3987528
+        createdBy: ab1235cde
+        imageUrls:
+        - imageUrls
+        - imageUrls
+        producer: Fine Art Production Co. Ltd, London, UK.
+        lastUpdatedOn: 2021-02-28T08:36:58Z
+        comment: This piece has a weak corner which looks a bit funny
+        nextAvailableDate: 2021-02-28T00:00:00.000+0000
+        dateObtained: 1998-08-08T00:00:00.000+0000
+        status: available
+      properties:
+        title:
+          example: Mona Lisa
+          nullable: false
+          type: string
+        artForm:
+          enum:
+          - painting
+          - photograph
+          - print
+          - sculpture
+          - assemblage
+          - collage
+          nullable: false
+          type: string
+        description:
+          example: Portrait painting with a mysterious smile
+          type: string
+        storageLocation:
+          example: building 12 room 304 shelf 5 slot 67
+          nullable: false
+          type: string
+        artist:
+          example: Leonardo da Vinci
+          type: string
+        producer:
+          description: If the artwork is a print or other manufactured article, record
+            the publisher or manufacturer here.
+          example: Fine Art Production Co. Ltd, London, UK.
+          type: string
+        productSerialNumber:
+          description: If the artwork has a serial number, record it in this property.
+          example: TSN3987528
+          type: string
+        imageUrls:
+          items:
+            type: string
+          type: array
+        dateObtained:
+          description: The date when Alpha Org obtained this piece of artwork.
+          example: 1998-08-08
+          format: date
+          type: string
+        marketValue:
+          description: Market value of this piece of artwork. Unit in Euro.
+          example: 288.88
+          format: currency
+          type: number
+        status:
+          default: available
+          description: Status of this artwork in alpha org.
+          enum:
+          - available
+          - reserved
+          - in use
+          - return reported
+          - not for lending
+          - record deleted
+          example: available
+          nullable: false
+          type: string
+        nextAvailableDate:
+          description: Nearst next date when this artwork is available for lending.
+          example: 2021-02-28
+          format: date
+          nullable: false
+          type: string
+        comment:
+          description: Any comment about this artwork
+          example: This piece has a weak corner which looks a bit funny
+          type: string
+        createdOn:
+          default: 2021-02-28T08:36:58Z
+          description: Date and time when this record is created.
+          example: 2021-02-28T08:36:58Z
+          format: date-time
+          nullable: false
+          type: string
+        createdBy:
+          default: user id of current admin
+          description: User id of the admin who created this record.
+          example: ab1235cde
+          nullable: false
+          type: string
+        lastUpdatedOn:
+          default: 2021-02-28T08:36:58Z
+          description: Time of last update of this record, a timestamp.
+          example: 2021-02-28T08:36:58Z
+          format: date-time
+          nullable: false
+          type: string
+        lastUpdatedBy:
+          default: user id of current admin
+          description: User id of the admin who last updated this record.
+          example: ab1235cde
+          nullable: false
+          type: string
+      required:
+      - artForm
+      - createdBy
+      - createdOn
+      - lastUpdatedBy
+      - lastUpdatedOn
+      - nextAvailableDate
+      - status
+      - storageLocation
+      - title
+      type: object
+    Artwork:
+      allOf:
+      - $ref: '#/components/schemas/NewArtwork'
+      - $ref: '#/components/schemas/Artwork_allOf'
+    ArtworkMeta:
+      example:
+        artist: Leonardo da Vinci
+        description: Portrait painting with a mysterious smile
+        storageLocation: building 12 room 304 shelf 5 slot 67
+        marketValue: 288.88
+        title: Mona Lisa
+        artForm: painting
+        productSerialNumber: TSN3987528
+        imageUrls:
+        - https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/Mona_Lisa%2C_by_Leonardo_da_Vinci%2C_from_C2RMF_retouched.jpg/1280px-Mona_Lisa%2C_by_Leonardo_da_Vinci%2C_from_C2RMF_retouched.jpg
+        - https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/Mona_Lisa%2C_by_Leonardo_da_Vinci%2C_from_C2RMF_retouched.jpg/1280px-Mona_Lisa%2C_by_Leonardo_da_Vinci%2C_from_C2RMF_retouched.jpg
+        self: artworks/da-vinci-mona-lisa
+        producer: Fine Art Production Co. Ltd, London, UK.
+        comment: This piece has a weak corner which looks a bit funny
+        id: da-vinci-mona-lisa
+        nextAvailableDate: 2021-02-28T00:00:00.000+0000
+        dateObtained: 1998-08-08T00:00:00.000+0000
+        status: available
+      properties:
+        id:
+          description: ID of a artwork. ID of an artwork is a combination of the artist
+            name and the artwork name and optional integer identifier
+          example: da-vinci-mona-lisa
+          nullable: false
+          type: string
+        self:
+          example: artworks/da-vinci-mona-lisa
+          format: uri
+          nullable: false
+          type: string
+        title:
+          example: Mona Lisa
+          nullable: false
+          type: string
+        artForm:
+          enum:
+          - painting
+          - photograph
+          - print
+          - sculpture
+          - assemblage
+          - collage
+          nullable: false
+          type: string
+        description:
+          example: Portrait painting with a mysterious smile
+          type: string
+        storageLocation:
+          example: building 12 room 304 shelf 5 slot 67
+          nullable: false
+          type: string
+        artist:
+          example: Leonardo da Vinci
+          type: string
+        imageUrls:
+          items:
+            example: https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/Mona_Lisa%2C_by_Leonardo_da_Vinci%2C_from_C2RMF_retouched.jpg/1280px-Mona_Lisa%2C_by_Leonardo_da_Vinci%2C_from_C2RMF_retouched.jpg
+            type: string
+          type: array
+        producer:
+          description: If the artwork is a print or other manufactured article, record
+            the publisher or manufacturer here.
+          example: Fine Art Production Co. Ltd, London, UK.
+          type: string
+        productSerialNumber:
+          description: If the artwork has a serial number, record it in this property.
+          example: TSN3987528
+          type: string
+        dateObtained:
+          description: The date when Alpha Org obtained this piece of artwork.
+          example: 1998-08-08
+          format: date
+          type: string
+        marketValue:
+          description: Market value of this piece of artwork. Unit in Euro.
+          example: 288.88
+          format: currency
+          type: number
+        status:
+          default: available
+          description: Status of this artwork in alpha org.
+          enum:
+          - available
+          - reserved
+          - in use
+          - return reported
+          - record deleted
+          example: available
+          nullable: false
+          type: string
+        nextAvailableDate:
+          description: Nearst next date when this artwork is available for lending.
+          example: 2021-02-28
+          format: date
+          nullable: false
+          type: string
+        comment:
+          description: Any comment about this artwork
+          example: This piece has a weak corner which looks a bit funny
+          type: string
+      required:
+      - artForm
+      - id
+      - nextAvailableDate
+      - self
+      - status
+      - storageLocation
+      - title
+      type: object
+    ArtworksResponse:
+      example:
+        artworkMetas:
+        - artist: Leonardo da Vinci
+          description: Portrait painting with a mysterious smile
+          storageLocation: building 12 room 304 shelf 5 slot 67
+          marketValue: 288.88
+          title: Mona Lisa
+          artForm: painting
+          productSerialNumber: TSN3987528
+          imageUrls:
+          - https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/Mona_Lisa%2C_by_Leonardo_da_Vinci%2C_from_C2RMF_retouched.jpg/1280px-Mona_Lisa%2C_by_Leonardo_da_Vinci%2C_from_C2RMF_retouched.jpg
+          - https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/Mona_Lisa%2C_by_Leonardo_da_Vinci%2C_from_C2RMF_retouched.jpg/1280px-Mona_Lisa%2C_by_Leonardo_da_Vinci%2C_from_C2RMF_retouched.jpg
+          self: artworks/da-vinci-mona-lisa
+          producer: Fine Art Production Co. Ltd, London, UK.
+          comment: This piece has a weak corner which looks a bit funny
+          id: da-vinci-mona-lisa
+          nextAvailableDate: 2021-02-28T00:00:00.000+0000
+          dateObtained: 1998-08-08T00:00:00.000+0000
+          status: available
+        - artist: Leonardo da Vinci
+          description: Portrait painting with a mysterious smile
+          storageLocation: building 12 room 304 shelf 5 slot 67
+          marketValue: 288.88
+          title: Mona Lisa
+          artForm: painting
+          productSerialNumber: TSN3987528
+          imageUrls:
+          - https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/Mona_Lisa%2C_by_Leonardo_da_Vinci%2C_from_C2RMF_retouched.jpg/1280px-Mona_Lisa%2C_by_Leonardo_da_Vinci%2C_from_C2RMF_retouched.jpg
+          - https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/Mona_Lisa%2C_by_Leonardo_da_Vinci%2C_from_C2RMF_retouched.jpg/1280px-Mona_Lisa%2C_by_Leonardo_da_Vinci%2C_from_C2RMF_retouched.jpg
+          self: artworks/da-vinci-mona-lisa
+          producer: Fine Art Production Co. Ltd, London, UK.
+          comment: This piece has a weak corner which looks a bit funny
+          id: da-vinci-mona-lisa
+          nextAvailableDate: 2021-02-28T00:00:00.000+0000
+          dateObtained: 1998-08-08T00:00:00.000+0000
+          status: available
+        offset: 10
+        totalArtworks: 123
+      properties:
+        totalArtworks:
+          example: 123
+          minimum: 0
+          type: integer
+        offset:
+          example: 10
+          minimum: 0
+          type: integer
+        artworkMetas:
+          items:
+            $ref: '#/components/schemas/ArtworkMeta'
+          type: array
+      type: object
+    Tag:
+      properties:
+        id:
+          type: integer
+        self:
+          format: uri
+          type: string
+        name:
+          example: impressionism
+          type: string
+      required:
+      - name
+      type: object
+    ApiResponse:
+      example:
+        code: 0
+        type: type
+        message: message
+      properties:
+        code:
+          format: int32
+          type: integer
+        type:
+          type: string
+        message:
+          type: string
+      type: object
+    LendingMeta:
+      properties:
+        id:
+          description: ID of a lending record. This is an automatically generated
+            UUID, basically time based.
+          example: 123e4567-e89b-12d3-a456-426614174000
+          nullable: false
+          type: string
+        self:
+          example: lendings/123e4567-e89b-12d3-a456-426614174000
+          format: uri
+          nullable: false
+          type: string
+        artworkId:
+          description: ID of a artwork. ID of an artwork is a combination of the artist
+            name and the artwork name and optional integer identifier
+          example: da-vinci-mona-lisa
+          nullable: false
+          type: string
+        userId:
+          description: ID of the user who borrowed the artwork.
+          example: userLender
+          nullable: false
+          type: string
+        lendingStatus:
+          enum:
+          - reserved
+          - sent to lender
+          - return reported
+          - lending closed
+          - record deleted
+          nullable: false
+          type: string
+        startDate:
+          format: date
+          nullable: false
+          type: string
+        endDate:
+          format: date
+          nullable: false
+          type: string
+      required:
+      - artworkId
+      - endDate
+      - id
+      - lendingStatus
+      - self
+      - startDate
+      - userId
+      type: object
+    Artwork_allOf:
+      properties:
+        id:
+          description: ID of a artwork. ID of an artwork is a combination of the artist
+            name and the artwork name and optional integer identifier
+          example: da-vinci-mona-lisa
+          nullable: false
+          type: string
+        self:
+          example: artworks/da-vinci-mona-lisa
+          format: uri
+          nullable: false
+          type: string
+        lendings:
+          description: A list of lending records of this piece of artwork. If this
+            artwork does not have any lending history, this array can be null.
+          items:
+            $ref: '#/components/schemas/LendingMeta'
+          type: array
+      required:
+      - id
+      - self
+      type: object
+  securitySchemes:
+    api_key:
+      in: header
+      name: X-API-Key
+      type: apiKey
+    artworks_auth:
+      flows:
+        implicit:
+          authorizationUrl: http://artworks.swagger.io/oauth/dialog
+          scopes:
+            write:artworks: create artworks, modify properties of artworks
+            read:artworks: read artworks
+      type: oauth2

@@ -17,8 +17,8 @@ This is API server using Express and MongoDB for the App *Artwork Library of Alp
    If the path is wrong, the build script of this project won't work. Relevant code in `package.json`,
    pay attention to the input path:
    ```json
-   "gen:api:inventory": "openapi-generator-cli generate -g nodejs-express-server -i ../art-library-api/art-library-inventory-api.yml -o ./src/gen/inventory",
-    "gen:api:lending": "openapi-generator-cli generate -g nodejs-express-server -i ../art-library-api/art-library-lending-api.yml -o ./src/gen/lending",
+   "gen:api:inventory": "openapi-generator-cli generate -g nodejs-express-server -i ../art-library-api/art-library-inventory-api.yml -o ./gen/inventory",
+    "gen:api:lending": "openapi-generator-cli generate -g nodejs-express-server -i ../art-library-api/art-library-lending-api.yml -o ./gen/lending",
     "prestart": "npm run gen:api:inventory && npm run gen:api:lending",
     "start": "ng serve",
     "prebuild": "npm run gen:api:inventory && npm run gen:api:lending",

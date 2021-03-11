@@ -4,8 +4,8 @@
   "description": "API Server using Express for the App Artwork Library of Alpha Org",
   "main": "index.js",
   "scripts": {
-    "gen:api:inventory": "openapi-generator-cli generate -g nodejs-express-server -i ../art-library-api/art-library-inventory-api.yml -o ./src/gen/inventory",
-    "gen:api:lending": "openapi-generator-cli generate -g nodejs-express-server -i ../art-library-api/art-library-lending-api.yml -o ./src/gen/lending",
+    "gen:api:inventory": "openapi-generator-cli generate -g nodejs-express-server -i ../art-library-api/art-library-inventory-api.yml -o ./gen/inventory",
+    "gen:api:lending": "openapi-generator-cli generate -g nodejs-express-server -i ../art-library-api/art-library-lending-api.yml -o ./gen/lending",
     "prestart": "npm run gen:api:inventory && npm run gen:api:lending",
     "start": "node cool.js",
     "prebuild": "npm run gen:api:inventory && npm run gen:api:lending",
