@@ -1,0 +1,38 @@
+{
+  "name": "art-library-express",
+  "version": "0.0.1",
+  "description": "API Server using Express for the App Artwork Library of Alpha Org",
+  "main": "index.js",
+  "scripts": {
+    "gen:api:inventory": "openapi-generator-cli generate -g nodejs-express-server -i ../art-library-api/art-library-inventory-api.yml -o ./src/gen/inventory",
+    "gen:api:lending": "openapi-generator-cli generate -g nodejs-express-server -i ../art-library-api/art-library-lending-api.yml -o ./src/gen/lending",
+    "prestart": "npm run gen:api:inventory && npm run gen:api:lending",
+    "start": "node cool.js",
+    "prebuild": "npm run gen:api:inventory && npm run gen:api:lending",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nnworkspace/art-library-express.git"
+  },
+  "author": "nn <nnworkspace@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/nnworkspace/art-library-express/issues"
+  },
+  "homepage": "https://github.com/nnworkspace/art-library-express",
+  "dependencies": {
+    "cool-ascii-faces": "^1.3.4",
+    "express": "^4.17.1"
+  },
+  "keywords": [
+    "api",
+    "express",
+    "MongoDB",
+    "nodejs",
+    "artwork",
+    "cool",
+    "ascii",
+    "faces"
+  ]
+}
